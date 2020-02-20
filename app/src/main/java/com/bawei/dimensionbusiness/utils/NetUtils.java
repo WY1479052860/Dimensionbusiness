@@ -10,9 +10,11 @@ import android.util.Log;
 import android.widget.ImageView;
 
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Map;
 
 /**
  * <p>文件描述：<p>
@@ -40,26 +42,61 @@ public class NetUtils  {
         }
         return false;
     }
-    //2.移动网络
-    public boolean isModle(Context context){
-        //网络判断工具类
-        ConnectivityManager cm= (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo info = cm.getActiveNetworkInfo();
-        if(info!=null&&ConnectivityManager.TYPE_MOBILE==info.getType()){
-            return true;
-        }
-        return false;
+
+    public void dopostAndgetStream(final String path, final Map<String,String> map, final ICallBack iCallBack){
+        new Thread(){
+            @Override
+            public void run() {
+                super.run();
+                try {
+                    URL url = new URL(path);
+                    HttpURLConnection con = (HttpURLConnection) url.openConnection();
+                    con.setRequestMethod("POST");
+                    con.setConnectTimeout(5000);
+                    con.setReadTimeout(5000);
+                    con.setUseCaches(false);
+                    con.setDoInput(true);
+                    con.setDoOutput(true);
+                    StringBuilder builder = new StringBuilder();
+                    for (Map.Entry<String,String> entry:map.entrySet()){
+                        String key = entry.getKey();
+                        String value = entry.getValue();
+                        builder.append(key+"="+value+"&");
+                    }
+                    String user = builder.toString();
+                    user = user.substring(0,user.length()-1);
+                    OutputStream outputStream = con.getOutputStream();
+                    outputStream.write(user.getBytes());
+                    outputStream.flush();
+                    con.connect();
+                    int responseCode = con.getResponseCode();
+                    if (responseCode == 200){
+                        InputStream inputStream = con.getInputStream();
+                        int len = 0;
+                        byte[] bytes = new byte[1024];
+                        StringBuffer buffer = new StringBuffer();
+                        while ((len = inputStream.read(bytes))!=-1){
+                            buffer.append(new String(bytes,0,len));
+                        }
+                        inputStream.close();
+                        outputStream.close();
+                        final String s = buffer.toString();
+                        handler.post(new Runnable() {
+                            @Override
+                            public void run() {
+                                iCallBack.Success(s);
+                            }
+                        });
+                    }else {
+                        Log.i("xxx","网络请求失败");
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }.start();
     }
-    //2.isWifi
-    public boolean isWifi(Context context){
-        //网络判断工具类
-        ConnectivityManager cm= (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo info = cm.getActiveNetworkInfo();
-        if(info!=null&&ConnectivityManager.TYPE_WIFI==info.getType()){
-            return true;
-        }
-        return false;
-    }
+
 
     //6,获取网络JSON
     public void getJson(final String jsonurl, final ICallBack iCallBack){
