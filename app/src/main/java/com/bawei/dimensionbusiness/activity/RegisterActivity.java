@@ -8,17 +8,19 @@ import android.widget.EditText;
 
 import com.bawei.dimensionbusiness.R;
 
-public class MainActivity extends AppCompatActivity {
+public class RegisterActivity extends AppCompatActivity {
 
-
+    private EditText et_name;
+    private EditText et_pwd;
+    private Button bt_reg;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        setContentView(R.layout.activity_register);
         //找控件
-
+        et_name = findViewById(R.id.et_name);
+        et_pwd = findViewById(R.id.et_pwd);
+        bt_reg = findViewById(R.id.bt_reg);
     }
-    //这是注释
-
 }
