@@ -23,152 +23,95 @@ import java.util.Map;
  * <p>版本号：　使用单例模式封装网络工具类。<p>
  */
 public class NetUtils  {
-    //1.单例模式
-    public static NetUtils netUtils=new NetUtils();
+    private static NetUtils netutls=new NetUtils();
 
-    public NetUtils() {
+    private  NetUtils(){
+
     }
 
-    public static NetUtils getNetUtils() {
-        return netUtils;
+    public static NetUtils getNetutls() {
+
+        return netutls;
     }
-    //2.网络判断
-    public boolean isNet(Context context){
-        //网络判断工具类
-        ConnectivityManager cm= (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo info = cm.getActiveNetworkInfo();
-        if(info!=null){
+    public Boolean getwifi(Context context){
+        ConnectivityManager connectivityManager = (ConnectivityManager)context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
+        if(activeNetworkInfo!=null){
             return true;
+        }else{
+            return false;
         }
-        return false;
     }
 
-    public void dopostAndgetStream(final String path, final Map<String,String> map, final ICallBack iCallBack){
-        new Thread(){
+    Handler handler=new Handler();
+    public interface  Contiontper{
+        void onCtion(String json);
+        void onError(String msg);
+    }
+    public void getregister(final String strm, final Map<String,String>stringStringMap, final Contiontper contiontper){
+
+        new Thread(new Runnable() {
             @Override
             public void run() {
-                super.run();
                 try {
-                    URL url = new URL(path);
-                    HttpURLConnection con = (HttpURLConnection) url.openConnection();
-                    con.setRequestMethod("POST");
-                    con.setConnectTimeout(5000);
-                    con.setReadTimeout(5000);
-                    con.setUseCaches(false);
-                    con.setDoInput(true);
-                    con.setDoOutput(true);
-                    StringBuilder builder = new StringBuilder();
-                    for (Map.Entry<String,String> entry:map.entrySet()){
-                        String key = entry.getKey();
-                        String value = entry.getValue();
-                        builder.append(key+"="+value+"&");
+                    URL url = new URL(strm);
+                    final HttpURLConnection conn= (HttpURLConnection) url.openConnection();
+                    conn.setRequestMethod("POST");
+                    conn.setReadTimeout(5000);
+                    conn.setConnectTimeout(5000);
+                    conn.setUseCaches(false);
+                    conn.setDoInput(true);
+                    conn.setDoOutput(true);
+                    StringBuilder stringBuilder = new StringBuilder();
+                    for (Map.Entry<String,String>entry:stringStringMap.entrySet()){
+                        String key=entry.getKey();
+                        String value=entry.getValue();
+                        stringBuilder.append(key+"="+value+"&");
                     }
-                    String user = builder.toString();
-                    user = user.substring(0,user.length()-1);
-                    OutputStream outputStream = con.getOutputStream();
-                    outputStream.write(user.getBytes());
+                    String string = stringBuilder.toString();
+                    String s = string.substring(0, string.length() - 1);
+                    Log.i("xxx",s);
+                    OutputStream outputStream = conn.getOutputStream();
+                    outputStream.write(s.getBytes());
                     outputStream.flush();
-                    con.connect();
-                    int responseCode = con.getResponseCode();
-                    if (responseCode == 200){
-                        InputStream inputStream = con.getInputStream();
-                        int len = 0;
-                        byte[] bytes = new byte[1024];
-                        StringBuffer buffer = new StringBuffer();
-                        while ((len = inputStream.read(bytes))!=-1){
-                            buffer.append(new String(bytes,0,len));
+
+                    conn.connect();
+                    int i = conn.getResponseCode();
+                    if(i==200){
+                        InputStream inputStream = conn.getInputStream();
+                        int len=0;
+                        byte[]by=new byte[1024];
+                        StringBuilder sb = new StringBuilder();
+                        while ((len=inputStream.read(by))!=-1){
+                            String s1 = new String(by, 0, len);
+                            sb.append(s1);
                         }
                         inputStream.close();
                         outputStream.close();
-                        final String s = buffer.toString();
+                        final String string1 = sb.toString();
                         handler.post(new Runnable() {
                             @Override
                             public void run() {
-                                iCallBack.Success(s);
+                                if (contiontper!=null){
+                                    contiontper.onCtion(string1);
+                                }
                             }
                         });
-                    }else {
-                        Log.i("xxx","网络请求失败");
+                    }else{
+                        handler.post(new Runnable() {
+                            @Override
+                            public void run() {
+                                if(contiontper!=null){
+                                    contiontper.onError("请求错误");
+                                }
+                            }
+                        });
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
             }
-        }.start();
-    }
-
-
-    //6,获取网络JSON
-    public void getJson(final String jsonurl, final ICallBack iCallBack){
-        //线程+Handler
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    //创建URL
-                    URL url = new URL(jsonurl);
-                    HttpURLConnection conn= (HttpURLConnection) url.openConnection();
-                    //封装GET
-                    conn.setRequestMethod("GET");
-                    //设置连接超时为5秒钟，
-                    conn.setConnectTimeout(5000);
-                    // 读取超时为5秒钟
-                    conn.setReadTimeout(5000);
-                    //获取状态码
-                    int responseCode = conn.getResponseCode();
-                    if(responseCode==200){
-                        InputStream inputStream = conn.getInputStream();
-                        int len=0;
-                        byte[] by=new byte[1024];
-                        StringBuffer sb = new StringBuffer();
-                        while((len=inputStream.read(by))!=-1){
-                            String s = new String(by, 0, len);
-                            sb.append(s);
-                        }
-                        //关闭流
-                        inputStream.close();
-                        //转换成字符串
-                        final String json = sb.toString();
-                        handler.post(new Runnable() {
-                            @Override
-                            public void run() {
-                                if(iCallBack!=null){
-                                    iCallBack.Success(json);
-                                }
-                            }
-                        });
-
-                    }else{
-                        handler.post(new Runnable() {
-                            @Override
-                            public void run() {
-                                if(iCallBack!=null){
-                                    iCallBack.Error("请求失败");
-                                }
-                            }
-                        });
-                    }
-
-                } catch (final Exception e) {
-                    e.printStackTrace();
-                    handler.post(new Runnable() {
-                        @Override
-                        public void run() {
-                            if(iCallBack!=null){
-                                iCallBack.Error(e.toString());
-                            }
-                        }
-                    });
-                }
-            }
         }).start();
+    }
 
-    }
-    //5、创建Handler
-    private Handler handler=new Handler();
-    //7、接口回调
-    public interface ICallBack{
-        void Success(String json);
-        void Error(String msg);
-    }
 }
