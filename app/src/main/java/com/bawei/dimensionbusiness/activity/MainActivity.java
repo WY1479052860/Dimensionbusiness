@@ -1,8 +1,10 @@
-package com.bawei.dimensionbusiness;
+package com.bawei.dimensionbusiness.activity;
 
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.os.Bundle;
+
+import com.bawei.dimensionbusiness.R;
 
 public class MainActivity extends AppCompatActivity {
 
