@@ -8,7 +8,7 @@ import com.bawei.dimensionbusiness.Base.BaseActivity;
 import com.bawei.dimensionbusiness.R;
 
 /**
- * 这里登陆的页面
+ * 这里登陆的页面1
  */
 public class LoginActivity extends BaseActivity {
 
