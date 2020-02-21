@@ -9,9 +9,7 @@ import android.widget.EditText;
 import com.bawei.dimensionbusiness.R;
 
 public class MainActivity extends AppCompatActivity {
-
-
-
+    
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
